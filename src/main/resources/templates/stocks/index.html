@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html xmlns:th="https://www.thymeleaf.org">
+    <head>
+        <div th:replace="~{fragment :: meta}"></div> 
+             
+        <div th:replace="~{fragment :: styles}"></div> 
+        
+        <title>株式一覧</title> 
+        
+        <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    </head>
+    <body>
+        <div class="samuraitravel-wrapper">
+            <!-- ヘッダー -->
+            <div th:replace="~{fragment :: header}"></div>
+            
+            <main>
+                <div class="container pt-4 pb-5 samuraitravel-container">
+                    <div class="row justify-content-center">
+                        <div class="col-xxl-18 col-xl-19 col-lg-20">
+                            
+                            <h1 class="mb-4 text-center">株式一覧</h1> 
+
+                            <canvas id="myPieChart" width="400" height="400"></canvas>
+
+                            <script th:inline="javascript">
+                                /* サーバーサイドで用意したデータを取得 */
+                                var data = /*[[${chartData}]]*/ { labels: [], values: [] };
+                                console.log(data);
+                                data = JSON.parse(data);
+                                /* Chart.jsを使用して円グラフを描画 */
+                                var ctx = document.getElementById('myPieChart').getContext('2d');
+
+                                var myPieChart = new Chart(ctx, {
+                                    type: 'pie',
+                                    data: {
+                                        labels: data.labels,
+                                        datasets: [{
+                                            data: data.values,
+                                        }]
+                                    },
+                                    options: {
+                                        // responsive: true,  // グラフがウィンドウのサイズ変更に対応するかどうか
+                                        // maintainAspectRatio: true,  // アスペクト比を維持するかどうか
+                                        // もしくは、固定の幅と高さを指定することもできます
+                                    }
+                                });
+                            </script>
+
+                            <h2 class="mb-3 text-end" th:text="'取得額合計 ' + ${#numbers.formatInteger(totalAmount, 3, 'COMMA')}"></h2>  
+                            
+                            <div class="d-flex justify-content-between align-items-end flex-wrap">                            
+                                <a th:href="@{/stocks/register}" class="btn text-white shadow-sm mb-3 samuraitravel-btn">登録</a>     
+                                <ul class="nav nav-underline">
+                                    <li class="nav-item">
+                                      <a th:href="@{/stocks(order = IdAsc)}" class="nav-link btn text-white shadow-sm mb-3 samuraitravel-btn">昇順</a>
+                                    </li>
+                                    <li class="nav-item">
+                                      <a th:href="@{/stocks(order = IdDesc)}" class="nav-link btn text-white shadow-sm mb-3 samuraitravel-btn">降順</a>
+                                    </li>     
+                                </ul>            
+                            </div>                                                          
+                            
+                            <div th:if="${successMessage}" class="alert alert-info">
+                                <span th:text="${successMessage}"></span>
+                            </div> 
+
+                            <table class="table">
+                                <thead>
+                                    <tr>
+                                        <th scope="col">証券コード</th>
+                                        <th scope="col">企業名</th>
+                                        <th scope="col">取得単価</th>
+                                        <th scope="col">保有株数</th>
+                                        <th scope="col">保有総額</th>
+                                        <th scope="col">17業種コード名</th>
+                                        <th scope="col">33業種コード名</th>
+                                        <th scope="col">規模コード</th>
+                                        <th scope="col">市場区分名</th> 
+                                        <th scope="col"></th>            
+                                        <th scope="col"></th>                                
+                                    </tr>
+                                </thead>   
+                                <tbody>                                                     
+                                    <tr th:each="stocks : ${stocks}">
+                                        <td th:text="${stocks.getId()}"></td>
+                                        <td th:text="${stocks.getCompanyName()}"></td>
+                                        <td th:text="${#numbers.formatInteger(stocks.getAcquisitionPrice(), 3, 'COMMA')}"></td>
+                                        <td th:text="${stocks.getStockNumber()}"></td>
+                                        <td th:text="${#numbers.formatInteger(stocks.getStockNumber() * stocks.getAcquisitionPrice(), 3, 'COMMA')}"></td>
+                                        <td th:text="${stocks.getSector17CodeName()}"></td>
+                                        <td th:text="${stocks.getSector33CodeName()}"></td>
+                                        <td th:text="${stocks.getScaleCategory()}"></td>
+                                        <td th:text="${stocks.getMarketCodeName()}"></td>
+                                        <td><a th:href="@{/stocks/__${stocks.getId()}__/edit}">編集</a></td>  
+                                        <td><a href="#" class="samuraitravel-link-danger" data-bs-toggle="modal" th:data-bs-target="${'#deletestocksModal' + stocks.getId()}">削除</a></td>  
+                                        
+                                        <!-- 削除用モーダル -->
+                                        <div class="modal fade" th:id="${'deletestocksModal' + stocks.getId()}" tabindex="-1" th:aria-labelledby="${'deletestocksModalLabel' + stocks.getId()}">
+                                            <div class="modal-dialog">
+                                                <div class="modal-content">
+                                                    <div class="modal-header">
+                                                        <h5 class="modal-title" th:id="${'deletestocksModalLabel' + stocks.getId()}" th:text="${stocks.getCompanyName() + 'を削除してもよろしいですか？'}"></h5>
+                                                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="閉じる"></button>
+                                                    </div>
+                                                    <div class="modal-footer">
+                                                        <form method="post"th:action="@{/stocks/__${stocks.getId()}__/delete}">
+                                                            <button type="submit" class="btn samuraitravel-btn-danger text-white shadow-sm">削除</button>
+                                                        </form>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>  
+                                    </tr>                                      
+                                </tbody>
+                            </table>  
+                                                                                                   
+                        </div>
+                    </div>
+                </div>              
+            </main>
+            
+            <!-- フッター -->
+            <div th:replace="~{fragment :: footer}"></div>
+        </div>    
+        
+        <div th:replace="~{fragment :: scripts}"></div>  
+    </body>
+</html>
